@@ -52,6 +52,19 @@ class PlaylistsService {
     }
   }
 
+  async addSongToPlaylistById(id, songId) {
+    const query = {
+      text: 'DELETE FROM playlists WHERE id = $1 RETURNING id',
+      values: [id, songId],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new NotFoundError('playlist gagal dihapus. Id tidak ditemukan');
+    }
+  }
+
   async verifyPlaylistOwner(id, owner) {
     const query = {
       text: 'SELECT * FROM playlists WHERE id = $1',
