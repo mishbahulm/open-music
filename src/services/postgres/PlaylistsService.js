@@ -3,11 +3,11 @@ const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 const AuthorizationError = require('../../exceptions/AuthorizationError');
-const ClientError = require('../../exceptions/ClientError');
 
 class PlaylistsService {
-  constructor() {
+  constructor(collaborationService) {
     this._pool = new Pool();
+    this._collaborationService = collaborationService;
   }
 
   async addPlaylist({
@@ -33,7 +33,8 @@ class PlaylistsService {
     const query = {
       text: `SELECT p.id, p.name, u.username FROM playlists p
       LEFT JOIN users u ON p.owner = u.id
-      WHERE p.owner = $1`,
+      LEFT JOIN collaborations c ON p.id = c.playlist_id
+      WHERE p.owner = $1 OR c.user_id = $1`,
       values: [owner],
     };
     const result = await this._pool.query(query);
@@ -119,7 +120,22 @@ class PlaylistsService {
 
     const result = await this._pool.query(query);
     if (!result.rowCount) {
-      throw new ClientError('songId tidak valid');
+      throw new InvariantError('songId tidak valid');
+    }
+  }
+
+  async verifyPlaylistAccess(playlistId, userId) {
+    try {
+      await this.verifyPlaylistOwner(playlistId, userId);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      try {
+        await this._collaborationService.verifyCollaborator(playlistId, userId);
+      } catch {
+        throw error;
+      }
     }
   }
 }

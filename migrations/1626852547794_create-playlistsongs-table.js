@@ -30,6 +30,6 @@ exports.up = (pgm) => {
 };
 
 exports.down = (pgm) => {
-  // menghapus tabel collaborations
+  // menghapus tabel playlistsongs
   pgm.dropTable('playlistsongs');
 };
