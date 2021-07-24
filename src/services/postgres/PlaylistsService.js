@@ -87,7 +87,7 @@ class PlaylistsService {
       };
       const result = await this._pool.query(query);
 
-      // catatan akan disimpan pada cache sebelum fungsi getNotes dikembalikan
+      // catatan akan disimpan pada cache sebelum fungsi getPlaylistSongById dikembalikan
       await this._cacheService.set(`playlists:${playlistId}`, JSON.stringify(result.rows));
 
       return result.rows;
